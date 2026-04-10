@@ -399,6 +399,10 @@
                 <option value="transferencia">📲 Transferencia</option>
               </select>
             </div>
+            <div class="form-group" id="g-persona-group">
+              <label>¿Quién realizó el gasto?</label>
+              <select id="g-persona"><option value="">Seleccionar...</option></select>
+            </div>
             <div class="form-group full"><label>Descripción</label><input type="text" id="g-descripcion" placeholder="Ej: Supermercado, Netflix..."></div>
             <div class="form-group full"><label>Notas (opcional)</label><textarea id="g-notas" placeholder="Información adicional..."></textarea></div>
           </div>
@@ -411,8 +415,8 @@
             <button class="btn btn-danger" style="padding:5px 12px;font-size:0.78rem;" onclick="clearMonthGastos()">🗑 Limpiar mes</button>
           </div>
           <div class="table-wrap">
-            <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Monto</th><th></th></tr></thead>
-            <tbody id="gastos-tbody"><tr><td colspan="5"><div class="empty"><div class="emoji">📭</div><p>Sin gastos</p></div></td></tr></tbody></table>
+            <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Persona</th><th>Monto</th><th></th></tr></thead>
+            <tbody id="gastos-tbody"><tr><td colspan="6"><div class="empty"><div class="emoji">📭</div><p>Sin gastos</p></div></td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -721,15 +725,19 @@ async function addGasto() {
   const desc  = document.getElementById('g-descripcion').value.trim();
   const metodo= document.getElementById('g-metodo').value;
   const notas = document.getElementById('g-notas').value.trim();
+  const persona = document.getElementById('g-persona').value;
+  const participants = getMonthData(curKey()).budget.participants || [];
   if (!fecha || !monto || monto <= 0 || !cat || !desc) { toast('⚠️ Completá los campos obligatorios', true); return; }
+  if (participants.length > 1 && !persona) { toast('⚠️ Seleccioná quién realizó el gasto', true); return; }
   const [y, m] = fecha.split('-').map(Number);
   const key = monthKey(y, m - 1);
-  getMonthData(key).gastos.push({ id: Date.now(), fecha, monto, cat, desc, metodo, notas });
+  getMonthData(key).gastos.push({ id: Date.now(), fecha, monto, cat, desc, metodo, notas, persona: persona || participants[0]?.name || 'Yo' });
   await saveToSupabase();
   document.getElementById('g-monto').value = '';
   document.getElementById('g-categoria').value = '';
   document.getElementById('g-descripcion').value = '';
   document.getElementById('g-notas').value = '';
+  if (participants.length > 1) document.getElementById('g-persona').value = '';
   toast('✅ Gasto registrado');
   renderGastos();
   renderDashboard();
@@ -800,13 +808,25 @@ function renderGastos() {
   if (!document.getElementById('g-fecha').value)
     document.getElementById('g-fecha').value = new Date().toISOString().split('T')[0];
   const md = getMonthData(curKey());
+  const participants = md.budget.participants || [];
+  const personaSelect = document.getElementById('g-persona');
+  if (participants.length <= 1) {
+    const name = participants[0]?.name || 'Yo';
+    personaSelect.innerHTML = `<option value="${name}">${name}</option>`;
+    personaSelect.value = name;
+    document.getElementById('g-persona-group').style.display = 'none';
+  } else {
+    const current = personaSelect.value;
+    personaSelect.innerHTML = '<option value="">Seleccionar...</option>' + participants.map(p => `<option value="${p.name}"${p.name===current?' selected':''}>${p.name}</option>`).join('');
+    document.getElementById('g-persona-group').style.display = '';
+  }
   const sorted = [...md.gastos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   const key = curKey();
   document.getElementById('gastos-tbody').innerHTML = sorted.length === 0
-    ? '<tr><td colspan="5"><div class="empty"><div class="emoji">📭</div><p>Sin gastos este mes</p></div></td></tr>'
+    ? '<tr><td colspan="6"><div class="empty"><div class="emoji">📭</div><p>Sin gastos este mes</p></div></td></tr>'
     : sorted.map(g => {
         const ci = CAT_INFO[g.cat]||{label:g.cat,icon:'📦'};
-        return `<tr><td>${g.fecha}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</td><td><span class="cat-badge cat-${g.cat}">${ci.icon} ${ci.label}</span></td><td style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</td><td><button class="del-btn" onclick="deleteGasto(${g.id},'${key}')">🗑</button></td></tr>`;
+        return `<tr><td>${g.fecha}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</td><td><span class="cat-badge cat-${g.cat}">${ci.icon} ${ci.label}</span></td><td style="color:var(--text2);font-size:0.85rem">${g.persona||'—'}</td><td style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</td><td><button class="del-btn" onclick="deleteGasto(${g.id},'${key}')">🗑</button></td></tr>`;
       }).join('');
 }
 
