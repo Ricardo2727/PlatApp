@@ -266,6 +266,17 @@
   .trend-legend span { display: flex; align-items: center; gap: 5px; }
   .legend-dot { width: 12px; height: 7px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
+  /* ── CATEGORY ALERTS ── */
+  .cat-alert-list { display: flex; flex-direction: column; gap: 8px; }
+  .cat-alert-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid; }
+  .cat-alert-item.over  { background: rgba(255,77,109,0.07); border-color: rgba(255,77,109,0.25); }
+  .cat-alert-item.near  { background: rgba(255,183,3,0.07);  border-color: rgba(255,183,3,0.25); }
+  .cat-alert-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .cat-alert-info { flex: 1; min-width: 0; }
+  .cat-alert-name { font-size: 0.85rem; font-weight: 600; }
+  .cat-alert-detail { font-size: 0.76rem; color: var(--text2); margin-top: 2px; }
+  .cat-alert-badge { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.82rem; flex-shrink: 0; }
+
   /* ── PERSONAS SUMMARY ── */
   .persona-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .persona-row:last-child { border-bottom: none; padding-bottom: 0; }
@@ -429,6 +440,12 @@
           <div class="progress-label"><span>Gastado vs Presupuesto</span><span id="prog-label-global">0%</span></div>
           <div class="progress-bar"><div class="progress-fill green" id="prog-global" style="width:0%"></div></div>
         </div>
+      </div>
+      <div id="cat-alerts-card" style="margin-bottom:20px;display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;color:var(--text2);">⚠️ Alertas de Categorías</span>
+        </div>
+        <div id="cat-alerts" class="cat-alert-list"></div>
       </div>
       <div id="personas-card" class="card" style="margin-bottom:20px;display:none;">
         <div class="card-title">👥 Gastos por Persona</div>
@@ -888,6 +905,16 @@ async function addGasto() {
   document.getElementById('g-notas').value = '';
   if (participants.length > 1) document.getElementById('g-persona').value = '';
   toast('✅ Gasto registrado');
+  // Verificar si este gasto cruzó algún límite de categoría
+  const mdCheck  = getMonthData(monthKey(y, m - 1));
+  const catLimit = mdCheck.budget.cats?.[cat];
+  if (catLimit) {
+    const catSpent = mdCheck.gastos.filter(g => g.cat === cat).reduce((s,g) => s+g.monto, 0);
+    const pct = (catSpent / catLimit) * 100;
+    const ci  = CAT_INFO[cat] || { icon: '📦', label: cat };
+    if (pct >= 100) toast(`⚠️ ${ci.icon} ${ci.label}: superaste el límite (${fmt(catSpent)} de ${fmt(catLimit)})`, true);
+    else if (pct >= 80) toast(`⚡ ${ci.icon} ${ci.label}: ${pct.toFixed(0)}% del límite usado (${fmt(catLimit - catSpent)} restante)`, true);
+  }
   renderGastos();
   renderDashboard();
 }
@@ -950,9 +977,51 @@ function renderDashboard() {
         return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:1.2rem">${ci.icon}</span><div style="flex:1;min-width:0"><div style="font-size:0.88rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</div><div style="font-size:0.75rem;color:var(--text3)">${g.fecha}</div></div><div style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</div></div>`;
       }).join('');
 
+  renderCatAlerts();
   renderPersonasSummary();
   renderTrendChart();
   renderSavings();
+}
+
+// ══════════════════════════════════════════════════════
+// ALERTAS DE CATEGORÍAS
+// ══════════════════════════════════════════════════════
+function renderCatAlerts() {
+  const md     = getMonthData(curKey());
+  const cats   = md.budget.cats || {};
+  const card   = document.getElementById('cat-alerts-card');
+
+  if (Object.keys(cats).length === 0) { card.style.display = 'none'; return; }
+
+  const byCat = {};
+  md.gastos.forEach(g => { byCat[g.cat] = (byCat[g.cat] || 0) + g.monto; });
+
+  const alerts = Object.entries(cats)
+    .map(([cat, limit]) => ({ cat, limit, spent: byCat[cat] || 0, pct: ((byCat[cat] || 0) / limit) * 100 }))
+    .filter(a => a.pct >= 80)
+    .sort((a, b) => b.pct - a.pct);
+
+  if (alerts.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  document.getElementById('cat-alerts').innerHTML = alerts.map(a => {
+    const ci      = CAT_INFO[a.cat] || { icon: '📦', label: a.cat };
+    const over    = a.pct >= 100;
+    const cls     = over ? 'over' : 'near';
+    const color   = over ? 'var(--accent3)' : 'var(--accent4)';
+    const badge   = over ? `+${fmt(a.spent - a.limit)} excedido` : `${a.pct.toFixed(0)}% usado`;
+    const detail  = over
+      ? `Gastaste ${fmt(a.spent)} de ${fmt(a.limit)} — superaste el límite`
+      : `Gastaste ${fmt(a.spent)} de ${fmt(a.limit)} — quedan ${fmt(a.limit - a.spent)}`;
+    return `<div class="cat-alert-item ${cls}">
+      <div class="cat-alert-icon">${ci.icon}</div>
+      <div class="cat-alert-info">
+        <div class="cat-alert-name">${ci.label}</div>
+        <div class="cat-alert-detail">${detail}</div>
+      </div>
+      <div class="cat-alert-badge" style="color:${color}">${badge}</div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════
