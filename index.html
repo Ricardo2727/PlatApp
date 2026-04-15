@@ -266,6 +266,14 @@
   .trend-legend span { display: flex; align-items: center; gap: 5px; }
   .legend-dot { width: 12px; height: 7px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
+  /* ── FILTER BAR ── */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); padding: 7px 12px; font-size: 0.82rem; font-family: 'Geist', sans-serif; outline: none; transition: border-color .2s; }
+  .filter-bar input { flex: 1; min-width: 140px; }
+  .filter-bar select { min-width: 130px; }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+  .filter-count { font-size: 0.75rem; color: var(--text3); margin-bottom: 8px; }
+
   /* ── CATEGORY ALERTS ── */
   .cat-alert-list { display: flex; flex-direction: column; gap: 8px; }
   .cat-alert-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid; }
@@ -517,6 +525,27 @@
             <span>Gastos del Mes</span>
             <button class="btn btn-danger" style="padding:5px 12px;font-size:0.78rem;" onclick="clearMonthGastos()">🗑 Limpiar mes</button>
           </div>
+          <div class="filter-bar">
+            <input type="text" id="f-busqueda" placeholder="🔍 Buscar descripción..." oninput="renderGastosTable()">
+            <select id="f-categoria" onchange="renderGastosTable()">
+              <option value="">Todas las categorías</option>
+              <option value="vivienda">🏠 Vivienda</option>
+              <option value="alimentos">🛒 Alimentación</option>
+              <option value="transporte">🚗 Transporte</option>
+              <option value="salud">🏥 Salud</option>
+              <option value="entretenimiento">🎮 Entretenimiento</option>
+              <option value="educacion">📚 Educación</option>
+              <option value="ropa">👗 Ropa</option>
+              <option value="servicios">💡 Servicios</option>
+              <option value="deudas">💳 Deudas</option>
+              <option value="ahorros">💰 Ahorros</option>
+              <option value="otros">📦 Otros</option>
+            </select>
+            <select id="f-persona" onchange="renderGastosTable()" style="display:none;">
+              <option value="">Todas las personas</option>
+            </select>
+          </div>
+          <div id="filter-count" class="filter-count"></div>
           <div class="table-wrap">
             <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Persona</th><th>Monto</th><th></th></tr></thead>
             <tbody id="gastos-tbody"><tr><td colspan="6"><div class="empty"><div class="emoji">📭</div><p>Sin gastos</p></div></td></tr></tbody></table>
@@ -1176,15 +1205,14 @@ function renderSavings() {
 function renderGastos() {
   const now = new Date();
   const isCurrent = state.currentMonth === now.getMonth() && state.currentYear === now.getFullYear();
-  if (isCurrent) {
-    document.getElementById('g-fecha').value = now.toISOString().split('T')[0];
-  } else {
-    // Último día del mes activo
-    const lastDay = new Date(state.currentYear, state.currentMonth + 1, 0);
-    document.getElementById('g-fecha').value = lastDay.toISOString().split('T')[0];
-  }
-  const md = getMonthData(curKey());
+  document.getElementById('g-fecha').value = isCurrent
+    ? now.toISOString().split('T')[0]
+    : new Date(state.currentYear, state.currentMonth + 1, 0).toISOString().split('T')[0];
+
+  const md           = getMonthData(curKey());
   const participants = md.budget.participants || [];
+
+  // Selector de persona en el formulario
   const personaSelect = document.getElementById('g-persona');
   if (participants.length <= 1) {
     const name = participants[0]?.name || 'Yo';
@@ -1196,12 +1224,46 @@ function renderGastos() {
     personaSelect.innerHTML = '<option value="">Seleccionar...</option>' + participants.map(p => `<option value="${p.name}"${p.name===current?' selected':''}>${p.name}</option>`).join('');
     document.getElementById('g-persona-group').style.display = '';
   }
-  const sorted = [...md.gastos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+
+  // Filtro de persona en la tabla
+  const fPersona = document.getElementById('f-persona');
+  if (participants.length >= 2) {
+    const cur = fPersona.value;
+    fPersona.innerHTML = '<option value="">Todas las personas</option>' + participants.map(p => `<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+    fPersona.style.display = '';
+  } else {
+    fPersona.style.display = 'none';
+    fPersona.value = '';
+  }
+
+  // Limpiar filtros al cambiar de mes
+  document.getElementById('f-busqueda').value = '';
+  document.getElementById('f-categoria').value = '';
+
+  renderGastosTable();
+}
+
+function renderGastosTable() {
+  const busqueda      = document.getElementById('f-busqueda').value.toLowerCase().trim();
+  const catFiltro     = document.getElementById('f-categoria').value;
+  const personaFiltro = document.getElementById('f-persona').value;
+
+  const md  = getMonthData(curKey());
   const key = curKey();
-  document.getElementById('gastos-tbody').innerHTML = sorted.length === 0
-    ? '<tr><td colspan="6"><div class="empty"><div class="emoji">📭</div><p>Sin gastos este mes</p></div></td></tr>'
-    : sorted.map(g => {
-        const ci = CAT_INFO[g.cat]||{label:g.cat,icon:'📦'};
+  let gastos = [...md.gastos].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+
+  if (busqueda)      gastos = gastos.filter(g => g.desc.toLowerCase().includes(busqueda));
+  if (catFiltro)     gastos = gastos.filter(g => g.cat === catFiltro);
+  if (personaFiltro) gastos = gastos.filter(g => g.persona === personaFiltro);
+
+  const hayFiltros = busqueda || catFiltro || personaFiltro;
+  const countEl    = document.getElementById('filter-count');
+  countEl.textContent = hayFiltros ? `Mostrando ${gastos.length} de ${md.gastos.length} gastos` : '';
+
+  document.getElementById('gastos-tbody').innerHTML = gastos.length === 0
+    ? `<tr><td colspan="6"><div class="empty"><div class="emoji">${hayFiltros ? '🔍' : '📭'}</div><p>${hayFiltros ? 'Sin resultados para ese filtro' : 'Sin gastos este mes'}</p></div></td></tr>`
+    : gastos.map(g => {
+        const ci = CAT_INFO[g.cat] || { label: g.cat, icon: '📦' };
         return `<tr><td>${g.fecha}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</td><td><span class="cat-badge cat-${g.cat}">${ci.icon} ${ci.label}</span></td><td style="color:var(--text2);font-size:0.85rem">${g.persona||'—'}</td><td style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</td><td><button class="del-btn" onclick="deleteGasto(${g.id},'${key}')">🗑</button></td></tr>`;
       }).join('');
 }
