@@ -266,6 +266,16 @@
   .trend-legend span { display: flex; align-items: center; gap: 5px; }
   .legend-dot { width: 12px; height: 7px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
+  /* ── PERSONAS SUMMARY ── */
+  .persona-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .persona-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .persona-avatar-sm { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 0.82rem; font-weight: 800; flex-shrink: 0; color: #0a0e1a; font-family: 'Space Grotesk', sans-serif; }
+  .persona-info { flex: 1; min-width: 0; }
+  .persona-name { font-size: 0.88rem; font-weight: 600; margin-bottom: 5px; }
+  .persona-bar-wrap { height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .persona-amounts { display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--text2); margin-top: 4px; }
+  .persona-total-spent { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+
   /* ── SAVINGS ── */
   .saving-big { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; }
   .saving-sub { font-size: 0.8rem; color: var(--text2); margin-top: 5px; }
@@ -419,6 +429,10 @@
           <div class="progress-label"><span>Gastado vs Presupuesto</span><span id="prog-label-global">0%</span></div>
           <div class="progress-bar"><div class="progress-fill green" id="prog-global" style="width:0%"></div></div>
         </div>
+      </div>
+      <div id="personas-card" class="card" style="margin-bottom:20px;display:none;">
+        <div class="card-title">👥 Gastos por Persona</div>
+        <div id="personas-summary"></div>
       </div>
       <div class="two-col">
         <div class="card"><div class="card-title">Gastos por Categoría</div><div class="bar-chart" id="cat-chart"><div class="empty"><div class="emoji">🗂️</div><p>Sin datos</p></div></div></div>
@@ -936,8 +950,53 @@ function renderDashboard() {
         return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:1.2rem">${ci.icon}</span><div style="flex:1;min-width:0"><div style="font-size:0.88rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</div><div style="font-size:0.75rem;color:var(--text3)">${g.fecha}</div></div><div style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</div></div>`;
       }).join('');
 
+  renderPersonasSummary();
   renderTrendChart();
   renderSavings();
+}
+
+// ══════════════════════════════════════════════════════
+// GASTOS POR PERSONA
+// ══════════════════════════════════════════════════════
+function renderPersonasSummary() {
+  const md           = getMonthData(curKey());
+  const participants = md.budget.participants || [];
+  const card         = document.getElementById('personas-card');
+
+  if (participants.length < 2) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  // Sumar gastos por persona
+  const byPersona = {};
+  participants.forEach(p => { byPersona[p.name] = 0; });
+  md.gastos.forEach(g => {
+    if (g.persona && byPersona[g.persona] !== undefined) byPersona[g.persona] += g.monto;
+    else if (g.persona) byPersona[g.persona] = (byPersona[g.persona] || 0) + g.monto;
+  });
+
+  const totalSpent = Object.values(byPersona).reduce((s, v) => s + v, 0);
+  const maxSpent   = Math.max(...Object.values(byPersona), 1);
+
+  document.getElementById('personas-summary').innerHTML = participants.map((p, i) => {
+    const color   = PERSON_COLORS[i % PERSON_COLORS.length];
+    const spent   = byPersona[p.name] || 0;
+    const barPct  = ((spent / maxSpent) * 100).toFixed(0);
+    const ofTotal = totalSpent > 0 ? ((spent / totalSpent) * 100).toFixed(0) : 0;
+    const overAporte = p.amount > 0 && spent > p.amount;
+    const barColor   = overAporte ? 'var(--accent3)' : color;
+    const aporteTxt  = p.amount > 0
+      ? `${fmt(spent)} de ${fmt(p.amount)} aportado`
+      : `${fmt(spent)} gastado`;
+    return `<div class="persona-row">
+      <div class="persona-avatar-sm" style="background:${color}">${p.name.slice(0,2).toUpperCase()}</div>
+      <div class="persona-info">
+        <div class="persona-name">${p.name}</div>
+        <div class="persona-bar-wrap"><div style="height:100%;width:${barPct}%;background:${barColor};border-radius:4px;transition:width .4s"></div></div>
+        <div class="persona-amounts"><span>${aporteTxt}</span><span style="color:${barColor}">${ofTotal}% del total</span></div>
+      </div>
+      <div class="persona-total-spent" style="color:${barColor}">${fmt(spent)}</div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════
