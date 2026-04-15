@@ -256,6 +256,22 @@
   .modal-box p { color: var(--text2); font-size: 0.9rem; line-height: 1.65; margin-bottom: 24px; }
   .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
+  /* ── TREND CHART ── */
+  .trend-row { display: grid; grid-template-columns: 52px 1fr 76px; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .trend-label { font-size: 0.75rem; color: var(--text2); font-weight: 600; text-align: right; }
+  .trend-bars { display: flex; flex-direction: column; gap: 3px; }
+  .trend-bar-wrap { height: 7px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .trend-amount { font-size: 0.76rem; font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+  .trend-legend { display: flex; gap: 16px; margin-top: 14px; font-size: 0.72rem; color: var(--text3); }
+  .trend-legend span { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 12px; height: 7px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+  /* ── SAVINGS ── */
+  .saving-big { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; }
+  .saving-sub { font-size: 0.8rem; color: var(--text2); margin-top: 5px; }
+  .saving-month-row { display: grid; grid-template-columns: 40px 1fr 68px; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .saving-month-label { font-size: 0.73rem; color: var(--text2); font-weight: 600; text-align: right; }
+
   /* ── WELCOME BANNER ── */
   .welcome-banner { background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(189,147,249,0.08)); border: 1px solid rgba(0,229,255,0.2); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; display: flex; gap: 16px; align-items: flex-start; }
   .welcome-banner.hidden { display: none; }
@@ -383,6 +399,14 @@
       <div class="two-col">
         <div class="card"><div class="card-title">Gastos por Categoría</div><div class="bar-chart" id="cat-chart"><div class="empty"><div class="emoji">🗂️</div><p>Sin datos</p></div></div></div>
         <div class="card"><div class="card-title">Últimas Transacciones</div><div id="recent-list"><div class="empty"><div class="emoji">📭</div><p>Sin gastos registrados</p></div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">📈 Tendencia de Gastos — Últimos 6 meses</div>
+        <div id="trend-chart"></div>
+      </div>
+      <div class="two-col">
+        <div class="card"><div class="card-title">💰 Ahorro del Mes</div><div id="saving-month"></div></div>
+        <div class="card"><div class="card-title">📊 Ahorro Acumulado</div><div id="saving-accumulated"></div></div>
       </div>
     </div>
 
@@ -888,6 +912,111 @@ function renderDashboard() {
         const ci = CAT_INFO[g.cat]||{icon:'📦'};
         return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:1.2rem">${ci.icon}</span><div style="flex:1;min-width:0"><div style="font-size:0.88rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</div><div style="font-size:0.75rem;color:var(--text3)">${g.fecha}</div></div><div style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</div></div>`;
       }).join('');
+
+  renderTrendChart();
+  renderSavings();
+}
+
+// ══════════════════════════════════════════════════════
+// TENDENCIA DE GASTOS
+// ══════════════════════════════════════════════════════
+function renderTrendChart() {
+  const months = [];
+  let y = state.currentYear, m = state.currentMonth;
+  for (let i = 0; i < 6; i++) {
+    const key = monthKey(y, m);
+    const d = state.data[key];
+    const budget = d?.budget?.total || 0;
+    const spent  = d?.gastos?.reduce((s,g) => s+g.monto, 0) || 0;
+    months.unshift({ label: MONTHS_ES[m].slice(0,3), budget, spent });
+    m--; if (m < 0) { m = 11; y--; }
+  }
+  const el = document.getElementById('trend-chart');
+  if (months.every(m => m.budget === 0 && m.spent === 0)) {
+    el.innerHTML = '<div class="empty"><div class="emoji">📈</div><p>Registrá gastos para ver la tendencia</p></div>'; return;
+  }
+  const maxVal = Math.max(...months.map(m => Math.max(m.budget, m.spent)), 1);
+  el.innerHTML = months.map(m => {
+    const budgetPct = (m.budget / maxVal) * 100;
+    const spentPct  = (m.spent  / maxVal) * 100;
+    const over  = m.budget > 0 && m.spent > m.budget;
+    const color = over ? 'var(--accent3)' : m.spent > 0 ? 'var(--accent2)' : 'var(--surface2)';
+    return `<div class="trend-row">
+      <div class="trend-label">${m.label}</div>
+      <div class="trend-bars">
+        ${m.budget > 0 ? `<div class="trend-bar-wrap"><div style="height:100%;width:${budgetPct}%;background:rgba(0,229,255,0.18);border-radius:4px"></div></div>` : ''}
+        <div class="trend-bar-wrap"><div style="height:100%;width:${spentPct}%;background:${color};border-radius:4px"></div></div>
+      </div>
+      <div class="trend-amount" style="color:${color}">${m.spent > 0 ? fmt(m.spent) : '—'}</div>
+    </div>`;
+  }).join('') +
+  `<div class="trend-legend">
+    <span><span class="legend-dot" style="background:rgba(0,229,255,0.18)"></span>Presupuesto</span>
+    <span><span class="legend-dot" style="background:var(--accent2)"></span>Gastado</span>
+    <span><span class="legend-dot" style="background:var(--accent3)"></span>Excedido</span>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// AHORRO
+// ══════════════════════════════════════════════════════
+function renderSavings() {
+  // Ahorro del mes activo
+  const md     = getMonthData(curKey());
+  const budget = md.budget.total || 0;
+  const spent  = md.gastos.reduce((s,g) => s+g.monto, 0);
+  const saving = budget - spent;
+  const savingEl = document.getElementById('saving-month');
+  if (budget === 0) {
+    savingEl.innerHTML = '<div class="empty" style="padding:16px 0"><div class="emoji">💰</div><p>Sin presupuesto definido</p></div>';
+  } else {
+    const color  = saving >= 0 ? 'var(--accent2)' : 'var(--accent3)';
+    const barPct = Math.min(Math.abs(saving / budget) * 100, 100).toFixed(0);
+    const label  = saving >= 0 ? 'ahorrado este mes' : 'excedido este mes';
+    savingEl.innerHTML = `
+      <div style="text-align:center;padding:14px 0 10px">
+        <div class="saving-big" style="color:${color}">${saving >= 0 ? '' : '-'}${fmt(Math.abs(saving))}</div>
+        <div class="saving-sub">${label}</div>
+      </div>
+      <div class="progress-wrap" style="margin-top:8px">
+        <div class="progress-label"><span>${saving >= 0 ? 'Porción ahorrada' : 'Exceso sobre presupuesto'}</span><span style="color:${color}">${barPct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${barPct}%;background:${color}"></div></div>
+      </div>`;
+  }
+
+  // Ahorro acumulado — últimos 6 meses con presupuesto
+  const history = [];
+  let y = state.currentYear, m = state.currentMonth;
+  for (let i = 0; i < 6; i++) {
+    const key = monthKey(y, m);
+    const d = state.data[key];
+    if (d?.budget?.total > 0) {
+      const s = d.budget.total - (d.gastos?.reduce((a,g) => a+g.monto, 0) || 0);
+      history.unshift({ label: MONTHS_ES[m].slice(0,3), saving: s });
+    }
+    m--; if (m < 0) { m = 11; y--; }
+  }
+  const accEl = document.getElementById('saving-accumulated');
+  if (history.length === 0) {
+    accEl.innerHTML = '<div class="empty" style="padding:16px 0"><div class="emoji">📊</div><p>Sin historial aún</p></div>'; return;
+  }
+  const total   = history.reduce((s,h) => s+h.saving, 0);
+  const color   = total >= 0 ? 'var(--accent2)' : 'var(--accent3)';
+  const maxAbs  = Math.max(...history.map(h => Math.abs(h.saving)), 1);
+  accEl.innerHTML = `
+    <div style="text-align:center;padding:8px 0 14px">
+      <div class="saving-big" style="color:${color};font-size:1.6rem">${total >= 0 ? '' : '-'}${fmt(Math.abs(total))}</div>
+      <div class="saving-sub">${total >= 0 ? 'ahorro acumulado' : 'déficit acumulado'} (${history.length} meses)</div>
+    </div>` +
+  history.map(h => {
+    const c   = h.saving >= 0 ? 'var(--accent2)' : 'var(--accent3)';
+    const pct = (Math.abs(h.saving) / maxAbs * 100).toFixed(0);
+    return `<div class="saving-month-row">
+      <div class="saving-month-label">${h.label}</div>
+      <div class="trend-bar-wrap" style="height:7px"><div style="height:100%;width:${pct}%;background:${c};border-radius:4px"></div></div>
+      <div style="font-size:0.74rem;font-family:'Space Grotesk',sans-serif;font-weight:700;color:${c}">${h.saving >= 0 ? '+' : '-'}${fmt(Math.abs(h.saving))}</div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════
