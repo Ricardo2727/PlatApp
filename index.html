@@ -518,9 +518,9 @@
         </div>
       </div>
       <div class="month-nav">
-        <button onclick="changeBudgetMonth(-1)">‹</button>
+        <button onclick="changeMonth(-1)">‹</button>
         <div class="month-label" id="budget-month-label">—</div>
-        <button onclick="changeBudgetMonth(1)">›</button>
+        <button onclick="changeMonth(1)">›</button>
       </div>
       <div class="two-col" style="margin-bottom:20px;">
         <div class="card">
@@ -669,7 +669,6 @@ async function onLogin(user) {
   // Load data from Supabase
   await loadFromSupabase();
   updateMonthLabels();
-  updateBudgetMonthLabel();
 
   const isNewUser = Object.keys(state.data).length === 0;
   const hasBudgetThisMonth = (state.data[curKey()]?.budget?.total || 0) > 0;
@@ -770,14 +769,12 @@ const PERSON_COLORS = ['#00e5ff','#6c63ff','#ff4d6d','#ffb703','#50dca0','#ff78c
 let state = {
   currentYear: new Date().getFullYear(),
   currentMonth: new Date().getMonth(),
-  budgetMonth: new Date().getMonth(),
-  budgetYear: new Date().getFullYear(),
   data: {}
 };
 
 function monthKey(y, m) { return `${y}-${String(m+1).padStart(2,'0')}`; }
 function curKey() { return monthKey(state.currentYear, state.currentMonth); }
-function budgetKey() { return monthKey(state.budgetYear, state.budgetMonth); }
+function budgetKey() { return curKey(); }
 function getMonthData(key) {
   if (!state.data[key]) state.data[key] = { gastos: [], budget: { total: 0, cats: {}, participants: [] } };
   if (!state.data[key].budget.participants) state.data[key].budget.participants = [];
@@ -816,17 +813,10 @@ function changeMonth(delta) {
   if (state.currentMonth > 11) { state.currentMonth = 0;  state.currentYear++; }
   updateMonthLabels();
   const active = document.querySelector('.page.active');
-  if (active?.id === 'page-dashboard') renderDashboard();
-  if (active?.id === 'page-gastos')    renderGastos();
-  if (active?.id === 'page-informe')   renderInformePage();
-}
-
-function changeBudgetMonth(delta) {
-  state.budgetMonth += delta;
-  if (state.budgetMonth < 0)  { state.budgetMonth = 11; state.budgetYear--; }
-  if (state.budgetMonth > 11) { state.budgetMonth = 0;  state.budgetYear++; }
-  updateBudgetMonthLabel();
-  renderPresupuesto();
+  if (active?.id === 'page-dashboard')   renderDashboard();
+  if (active?.id === 'page-gastos')      renderGastos();
+  if (active?.id === 'page-presupuesto') renderPresupuesto();
+  if (active?.id === 'page-informe')     renderInformePage();
 }
 
 function updateMonthLabels() {
@@ -837,6 +827,8 @@ function updateMonthLabels() {
   document.getElementById('current-month-label').textContent = label;
   document.getElementById('informe-month-label').textContent = label;
   document.getElementById('sidebar-month').textContent = label;
+  const budgetLabelEl = document.getElementById('budget-month-label');
+  if (budgetLabelEl) budgetLabelEl.textContent = label;
 
   // Sidebar badge color
   document.getElementById('sidebar-month-badge').classList.toggle('past', !isCurrent);
@@ -852,10 +844,6 @@ function updateMonthLabels() {
     gastosLabel.textContent = label;
     gastosTag.classList.toggle('past', !isCurrent);
   }
-}
-function updateBudgetMonthLabel() {
-  const el = document.getElementById('budget-month-label');
-  if (el) el.textContent = `${MONTHS_ES[state.budgetMonth]} ${state.budgetYear}`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1094,7 +1082,6 @@ function renderGastos() {
 // BUDGET
 // ══════════════════════════════════════════════════════
 function renderPresupuesto() {
-  updateBudgetMonthLabel();
   const md = getMonthData(budgetKey());
   const budget = md.budget;
   document.getElementById('p-total').value = budget.total || '';
