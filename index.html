@@ -303,7 +303,22 @@
   .empty .emoji { font-size: 2.5rem; margin-bottom: 12px; }
   .empty p { font-size: 0.88rem; }
   @media (max-width: 900px) { .stats-grid { grid-template-columns: 1fr 1fr; } .two-col, .annual-grid { grid-template-columns: 1fr; } }
-  @media (max-width: 680px) { .sidebar { display: none; } .main { padding: 20px; } .stats-grid { grid-template-columns: 1fr 1fr; } .form-grid { grid-template-columns: 1fr; } }
+  /* ── MOBILE HEADER ── */
+  .mobile-header { display: none; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 199; backdrop-filter: blur(2px); }
+  .sidebar-overlay.active { display: block; }
+  @media (max-width: 680px) {
+    .sidebar { display: flex !important; position: fixed; left: -270px; top: 0; height: 100vh; z-index: 200; transition: left .28s ease; box-shadow: none; width: 260px; }
+    .sidebar.open { left: 0; box-shadow: 4px 0 32px rgba(0,0,0,0.5); }
+    .mobile-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+    .mobile-header-logo { display: flex; align-items: center; gap: 10px; font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; }
+    .mobile-header-logo span { color: var(--accent); }
+    .hamburger-btn { background: none; border: 1px solid var(--border); color: var(--text); font-size: 1.2rem; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-sm); transition: background .2s; line-height: 1; }
+    .hamburger-btn:hover { background: var(--surface2); }
+    .main { padding: 20px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
   .page.active { animation: fadeIn .3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
   .divider { height: 1px; background: var(--border); margin: 22px 0; }
@@ -371,7 +386,16 @@
     </div>
   </aside>
 
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
   <main class="main">
+    <div class="mobile-header">
+      <div class="mobile-header-logo">
+        <div class="logo-icon" style="width:30px;height:30px;font-size:0.9rem;">🪙</div>
+        Plat<span>App</span>
+      </div>
+      <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+    </div>
 
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
@@ -764,7 +788,17 @@ function fmt(n) { return '$' + Number(n).toLocaleString('es-AR', { minimumFracti
 // ══════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+}
+
 function showPage(id, evt) {
+  closeSidebar();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
@@ -857,6 +891,7 @@ async function addGasto() {
 }
 
 async function deleteGasto(id, key) {
+  if (!confirm('¿Eliminar este gasto?')) return;
   const md = getMonthData(key);
   md.gastos = md.gastos.filter(g => g.id !== id);
   await saveToSupabase();
