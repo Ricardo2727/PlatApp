@@ -132,7 +132,7 @@
       <h1>Registrar Gasto</h1>
       <p class="subtitle">Añade un nuevo gasto a tu registro</p>
       <div id="gastos-period-tag" class="period-tag">📅 <span id="gastos-period-label">—</span></div>
-      <div class="two-col">
+      <div class="gastos-layout">
         <div class="card">
           <div class="card-title">Nuevo Gasto</div>
           <div class="form-grid">
@@ -162,6 +162,7 @@
                 <option value="debito">💳 Débito</option>
                 <option value="credito">🏦 Crédito</option>
                 <option value="transferencia">📲 Transferencia</option>
+                <option value="mercadopago">💙 Mercado Pago</option>
               </select>
             </div>
             <div class="form-group" id="g-persona-group">
@@ -202,12 +203,12 @@
           <div id="filter-count" class="filter-count"></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Persona</th><th>Monto</th><th></th></tr></thead>
-              <tbody id="gastos-tbody"><tr><td colspan="6"><div class="empty"><div class="emoji">📭</div><p>Sin gastos</p></div></td></tr></tbody>
+              <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Persona</th><th>Método</th><th>Monto</th><th></th></tr></thead>
+              <tbody id="gastos-tbody"><tr><td colspan="7"><div class="empty"><div class="emoji">📭</div><p>Sin gastos</p></div></td></tr></tbody>
             </table>
           </div>
         </div>
-      </div>
+      </div><!-- fin .gastos-layout -->
     </div>
 
     <!-- MODAL: PRESUPUESTO NO CONFIGURADO -->

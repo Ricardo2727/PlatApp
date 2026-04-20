@@ -134,10 +134,19 @@ function renderGastosTable() {
   const countEl    = document.getElementById('filter-count');
   countEl.textContent = hayFiltros ? `Mostrando ${gastos.length} de ${md.gastos.length} gastos` : '';
 
+  const METODO_LABEL = {
+    efectivo:      '💵 Efectivo',
+    debito:        '💳 Débito',
+    credito:       '🏦 Crédito',
+    transferencia: '📲 Transferencia',
+    mercadopago:   '💙 Mercado Pago',
+  };
+
   document.getElementById('gastos-tbody').innerHTML = gastos.length === 0
-    ? `<tr><td colspan="6"><div class="empty"><div class="emoji">${hayFiltros ? '🔍' : '📭'}</div><p>${hayFiltros ? 'Sin resultados para ese filtro' : 'Sin gastos este mes'}</p></div></td></tr>`
+    ? `<tr><td colspan="7"><div class="empty"><div class="emoji">${hayFiltros ? '🔍' : '📭'}</div><p>${hayFiltros ? 'Sin resultados para ese filtro' : 'Sin gastos este mes'}</p></div></td></tr>`
     : gastos.map(g => {
-        const ci = CAT_INFO[g.cat] || { label: g.cat, icon: '📦' };
-        return `<tr><td>${g.fecha}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</td><td><span class="cat-badge cat-${g.cat}">${ci.icon} ${ci.label}</span></td><td style="color:var(--text2);font-size:0.85rem">${g.persona || '—'}</td><td style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</td><td><button class="del-btn" onclick="deleteGasto(${g.id},'${key}')">🗑</button></td></tr>`;
+        const ci     = CAT_INFO[g.cat] || { label: g.cat, icon: '📦' };
+        const metodo = METODO_LABEL[g.metodo] || g.metodo || '—';
+        return `<tr><td>${g.fecha}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.desc}</td><td><span class="cat-badge cat-${g.cat}">${ci.icon} ${ci.label}</span></td><td style="color:var(--text2);font-size:0.85rem">${g.persona || '—'}</td><td style="color:var(--text2);font-size:0.82rem;white-space:nowrap">${metodo}</td><td style="font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent3)">${fmt(g.monto)}</td><td><button class="del-btn" onclick="deleteGasto(${g.id},'${key}')">🗑</button></td></tr>`;
       }).join('');
 }
