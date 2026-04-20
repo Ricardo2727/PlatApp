@@ -182,8 +182,8 @@ td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-s
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
 .cat-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; }
-.del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 1rem; transition: color .2s; }
-.del-btn:hover { color: var(--accent3); }
+.del-btn { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.25); cursor: pointer; color: var(--accent3); font-size: 0.9rem; padding: 5px 9px; border-radius: 8px; transition: all .2s; }
+.del-btn:hover { background: rgba(255,77,109,0.2); border-color: rgba(255,77,109,0.6); transform: scale(1.1); }
 
 /* ── CATEGORY COLORS ── */
 .cat-vivienda { background: rgba(0,229,255,0.08); color: var(--accent); }
