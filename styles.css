@@ -345,5 +345,5 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .flex-end { display: flex; justify-content: flex-end; }
 
 /* ── GASTOS LAYOUT: formulario arriba, tabla abajo (más ancha) ── */
-.gastos-layout { display: grid; grid-template-columns: 420px 1fr; gap: 20px; align-items: start; }
+.gastos-layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
 @media (max-width: 900px) { .gastos-layout { grid-template-columns: 1fr; } }
