@@ -27,11 +27,30 @@ async function initAuth() {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
       await onLogin(session.user);
+    } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+      currentUser = session.user;
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       state.data = {};
       document.getElementById('login-screen').classList.remove('hidden');
       document.getElementById('app-screen').classList.add('hidden');
+    }
+  });
+
+  // Al volver a la pestaña, verificar que la sesión sigue activa
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) {
+        currentUser = session.user;
+      } else if (currentUser) {
+        // Sesión expirada mientras estaba fuera
+        currentUser = null;
+        state.data = {};
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.add('hidden');
+        toast('⚠️ Tu sesión expiró, iniciá sesión nuevamente', true);
+      }
     }
   });
 }

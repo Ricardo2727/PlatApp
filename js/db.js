@@ -33,7 +33,7 @@ async function loadFromSupabase() {
 }
 
 async function saveToSupabase() {
-  if (!currentUser) return;
+  if (!currentUser) { toast('⚠️ Sin sesión activa — recargá la página', true); return; }
   setSyncStatus('syncing');
   localStorage.setItem('platapp_local', JSON.stringify({ data: state.data }));
   try {
