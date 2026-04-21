@@ -41,6 +41,10 @@ async function addGasto() {
 
   toast('✅ Gasto registrado');
 
+  // En mobile, cambiar al tab de historial automáticamente
+  const tabHistorial = document.querySelector('.gastos-tab:nth-child(2)');
+  if (tabHistorial && window.innerWidth <= 680) switchGastosTab('historial', tabHistorial);
+
   // Verificar si este gasto cruzó algún límite de categoría
   const mdCheck  = getMonthData(monthKey(y, m - 1));
   const catLimit = mdCheck.budget.cats?.[cat];

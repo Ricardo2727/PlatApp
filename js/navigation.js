@@ -36,6 +36,18 @@ function changeMonth(delta) {
   if (active?.id === 'page-informe')     renderInformePage();
 }
 
+function switchGastosTab(tab, btn) {
+  document.querySelectorAll('.gastos-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab === 'form') {
+    document.getElementById('gastos-panel-form').classList.remove('gastos-panel-hidden');
+    document.getElementById('gastos-panel-historial').classList.add('gastos-panel-hidden');
+  } else {
+    document.getElementById('gastos-panel-form').classList.add('gastos-panel-hidden');
+    document.getElementById('gastos-panel-historial').classList.remove('gastos-panel-hidden');
+  }
+}
+
 function updateMonthLabels() {
   const label    = `${MONTHS_ES[state.currentMonth]} ${state.currentYear}`;
   const now      = new Date();

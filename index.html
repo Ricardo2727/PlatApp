@@ -141,8 +141,15 @@
       <h1>Registrar Gasto</h1>
       <p class="subtitle">Añade un nuevo gasto a tu registro</p>
       <div id="gastos-period-tag" class="period-tag">📅 <span id="gastos-period-label">—</span></div>
+
+      <!-- Tabs solo visibles en mobile -->
+      <div class="gastos-tabs">
+        <button class="gastos-tab active" onclick="switchGastosTab('form', this)">➕ Nuevo Gasto</button>
+        <button class="gastos-tab" onclick="switchGastosTab('historial', this)">📋 Historial</button>
+      </div>
+
       <div class="gastos-layout">
-        <div class="card">
+        <div class="card" id="gastos-panel-form">
           <div class="card-title">Nuevo Gasto</div>
           <div class="form-grid">
             <div class="form-group"><label>Fecha</label><input type="date" id="g-fecha"></div>
@@ -188,7 +195,7 @@
           <div class="divider"></div>
           <div class="flex-end"><button class="btn btn-primary" onclick="addGasto()">➕ Agregar Gasto</button></div>
         </div>
-        <div class="card" style="overflow:hidden;">
+        <div class="card" id="gastos-panel-historial" style="overflow:hidden;">
           <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
             <span>Gastos del Mes</span>
             <button class="btn btn-danger" style="padding:5px 12px;font-size:0.78rem;" onclick="clearMonthGastos()">🗑 Limpiar mes</button>
