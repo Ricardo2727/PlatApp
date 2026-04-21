@@ -57,6 +57,9 @@ body::before {
 .login-divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 20px; }
 .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .login-divider span { font-size: 0.75rem; color: var(--text3); }
+.login-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; text-align: left; }
+.login-feature { display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.84rem; color: var(--text2); }
+.login-feature span:first-child { font-size: 1rem; flex-shrink: 0; }
 .login-footer { font-size: 0.75rem; color: var(--text3); margin-top: 24px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
