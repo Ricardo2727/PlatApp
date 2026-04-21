@@ -38,9 +38,8 @@ body::before {
 }
 .login-logo span { color: var(--accent); }
 .login-logo-icon {
-  width: 56px; height: 56px; border-radius: 16px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: grid; place-items: center; font-size: 1.6rem;
+  width: 56px; height: 56px;
+  display: grid; place-items: center;
   margin: 0 auto 16px;
 }
 .login-subtitle { color: var(--text2); font-size: 0.88rem; margin-bottom: 36px; line-height: 1.5; }

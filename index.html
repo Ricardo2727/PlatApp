@@ -22,7 +22,20 @@
 ══════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo-icon">🪙</div>
+    <div class="login-logo-icon">
+      <svg width="36" height="36" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="28" cy="28" r="28" fill="url(#coin-grad)"/>
+        <defs>
+          <radialGradient id="coin-grad" cx="40%" cy="35%">
+            <stop offset="0%" stop-color="#ffe566"/>
+            <stop offset="100%" stop-color="#f59e0b"/>
+          </radialGradient>
+        </defs>
+        <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="2"/>
+        <text x="28" y="37" font-family="Arial, sans-serif" font-size="28" font-weight="900"
+              fill="#92400e" text-anchor="middle">$</text>
+      </svg>
+    </div>
     <div class="login-logo">Plat<span>App</span></div>
     <p class="login-subtitle">Tu control de gastos personal.<br>Iniciá sesión para sincronizar tus datos en todos tus dispositivos.</p>
 
