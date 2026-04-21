@@ -64,7 +64,14 @@
 <div class="app">
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-icon">🪙</div>
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="28" cy="28" r="28" fill="url(#coin-grad-s)"/>
+          <defs><radialGradient id="coin-grad-s" cx="40%" cy="35%"><stop offset="0%" stop-color="#ffe566"/><stop offset="100%" stop-color="#f59e0b"/></radialGradient></defs>
+          <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="2"/>
+          <text x="28" y="37" font-family="Arial,sans-serif" font-size="28" font-weight="900" fill="#92400e" text-anchor="middle">$</text>
+        </svg>
+      </div>
       Plat<span>App</span>
     </div>
     <nav>
@@ -96,7 +103,14 @@
   <main class="main">
     <div class="mobile-header">
       <div class="mobile-header-logo">
-        <div class="logo-icon" style="width:30px;height:30px;font-size:0.9rem;">🪙</div>
+        <div class="logo-icon" style="width:30px;height:30px;">
+          <svg width="20" height="20" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="28" cy="28" r="28" fill="url(#coin-grad-m)"/>
+            <defs><radialGradient id="coin-grad-m" cx="40%" cy="35%"><stop offset="0%" stop-color="#ffe566"/><stop offset="100%" stop-color="#f59e0b"/></radialGradient></defs>
+            <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="2"/>
+            <text x="28" y="37" font-family="Arial,sans-serif" font-size="28" font-weight="900" fill="#92400e" text-anchor="middle">$</text>
+          </svg>
+        </div>
         Plat<span>App</span>
       </div>
       <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
