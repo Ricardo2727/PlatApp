@@ -14,3 +14,10 @@ function toast(msg, warn = false) {
 // ══════════════════════════════════════════════════════
 document.getElementById('g-fecha').value = new Date().toISOString().split('T')[0];
 initAuth();
+
+// Registrar Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
