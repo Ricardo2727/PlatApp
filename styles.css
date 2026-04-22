@@ -198,7 +198,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .cat-servicios { background: rgba(80,220,160,0.1); color: #50dca0; }
 .cat-deudas { background: rgba(255,80,80,0.12); color: #ff5050; }
 .cat-ahorros { background: rgba(0,229,255,0.1); color: #7fffcc; }
-.cat-streaming     { background: rgba(167,139,250,0.1); color: #a78bfa; }
+.cat-impuestos     { background: rgba(148,163,184,0.1); color: #94a3b8; }
+.cat-hogar         { background: rgba(192,132,252,0.1); color: #c084fc; }
 .cat-delivery      { background: rgba(251,146,60,0.1);  color: #fb923c; }
 .cat-cafe          { background: rgba(217,119,6,0.1);   color: #d97706; }
 .cat-suscripciones { background: rgba(52,211,153,0.1);  color: #34d399; }
